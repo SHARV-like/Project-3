@@ -1,85 +1,104 @@
 """
-Quick verification script to test if the project is set up correctly.
+Backend verification script for Forest Fire Early Warning System.
+Tests the complete pipeline: weather fetch -> feature extraction -> prediction.
 """
 
 import sys
 
-def check_imports():
-    """Check if all required packages can be imported."""
-    print("Checking imports...")
-    try:
-        import numpy
-        print("✓ numpy")
-        import pandas
-        print("✓ pandas")
-        import sklearn
-        print("✓ scikit-learn")
-        import shap
-        print("✓ shap")
-        import requests
-        print("✓ requests")
-        import joblib
-        print("✓ joblib")
-        print("\nAll imports successful!")
-        return True
-    except ImportError as e:
-        print(f"\n✗ Import error: {e}")
-        print("Please install requirements: pip install -r requirements.txt")
-        return False
+# Fixed coordinates for verification (Algerian Forest region)
+LATITUDE = 36.6500
+LONGITUDE = 3.1167
 
-def check_config():
-    """Check if configuration is set up correctly."""
-    print("\nChecking configuration...")
-    try:
-        import config
-        print(f"✓ Random state: {config.RANDOM_STATE}")
-        print(f"✓ Data directory: {config.DATA_DIR}")
-        print(f"✓ Models directory: {config.MODELS_DIR}")
-        print(f"✓ Results directory: {config.RESULTS_DIR}")
-        return True
-    except Exception as e:
-        print(f"✗ Configuration error: {e}")
-        return False
 
-def check_modules():
-    """Check if project modules can be imported."""
-    print("\nChecking project modules...")
+def verify_backend_pipeline():
+    """
+    Verify the backend pipeline by:
+    1. Fetching weather data using fixed coordinates
+    2. Building feature vector from weather data
+    3. Predicting fire risk using the trained model
+    4. Displaying all outputs clearly
+    """
+    print("=" * 70)
+    print("   FOREST FIRE EARLY WARNING SYSTEM - BACKEND VERIFICATION")
+    print("=" * 70)
+    print()
+    
+    # Display fixed coordinates being used
+    print(f"Using fixed coordinates:")
+    print(f"  Latitude:  {LATITUDE}")
+    print(f"  Longitude: {LONGITUDE}")
+    print()
+    
+    # Step 1: Fetch weather data
+    print("-" * 70)
+    print("STEP 1: Fetching Weather Data")
+    print("-" * 70)
+    
     try:
-        from data_loader import load_data
-        print("✓ data_loader")
-        from weather_api import WeatherAPI
-        print("✓ weather_api")
-        from explainability import ModelExplainer
-        print("✓ explainability")
-        print("\nAll modules imported successfully!")
-        return True
+        from src.weather_api import get_weather_data
+        weather_data = get_weather_data(LATITUDE, LONGITUDE)
+        
+        print("Weather Data Dictionary:")
+        print(f"  Temperature: {weather_data['temperature']:.2f} °C")
+        print(f"  Humidity:    {weather_data['humidity']:.1f} %")
+        print(f"  Wind Speed:  {weather_data['wind_speed']:.2f} m/s")
+        print(f"  Rainfall:    {weather_data['rainfall']:.2f} mm")
+        print()
+        
     except Exception as e:
-        print(f"✗ Module import error: {e}")
+        print(f"ERROR: Failed to fetch weather data: {e}")
+        print()
         return False
+    
+    # Step 2: Build feature vector
+    print("-" * 70)
+    print("STEP 2: Building Feature Vector")
+    print("-" * 70)
+    
+    try:
+        from src.risk_mapper import map_weather_to_features
+        feature_df = map_weather_to_features(weather_data)
+        
+        print("Feature DataFrame:")
+        print(feature_df.to_string(index=False))
+        print()
+        
+    except Exception as e:
+        print(f"ERROR: Failed to build feature vector: {e}")
+        print()
+        return False
+    
+    # Step 3: Predict fire risk
+    print("-" * 70)
+    print("STEP 3: Predicting Fire Risk")
+    print("-" * 70)
+    
+    try:
+        from src.predictor import predict_fire_risk
+        risk_label, confidence_score = predict_fire_risk(feature_df)
+        
+        print(f"Predicted Fire Risk Label: {risk_label}")
+        print(f"Confidence Score:          {confidence_score:.4f} ({confidence_score * 100:.2f}%)")
+        print()
+        
+    except Exception as e:
+        print(f"ERROR: Failed to predict fire risk: {e}")
+        print()
+        return False
+    
+    # Success footer
+    print("=" * 70)
+    print("   BACKEND VERIFICATION COMPLETE - ALL STEPS PASSED")
+    print("=" * 70)
+    
+    return True
+
 
 def main():
-    """Run all verification checks."""
-    print("=" * 60)
-    print("Project Setup Verification")
-    print("=" * 60)
-    
-    all_ok = True
-    all_ok &= check_imports()
-    all_ok &= check_config()
-    all_ok &= check_modules()
-    
-    print("\n" + "=" * 60)
-    if all_ok:
-        print("✓ Setup verification PASSED!")
-        print("\nNext steps:")
-        print("1. Run 'python train_model.py' to train models")
-        print("2. Run 'python demo.py' to see the demo")
-    else:
-        print("✗ Setup verification FAILED!")
-        print("Please fix the errors above.")
-    print("=" * 60)
-    
-    return 0 if all_ok else 1
+    """Main entry point for the verification script."""
+    success = verify_backend_pipeline()
+    return 0 if success else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

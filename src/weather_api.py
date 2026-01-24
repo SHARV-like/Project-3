@@ -8,7 +8,8 @@ import requests
 from typing import Dict
 
 
-def get_weather_data(latitude: float, longitude: float) -> Dict[str, float]:
+def fetch_weather(latitude: float, longitude: float) -> Dict[str, float]:
+
     """
     Fetch current weather data from OpenWeather API.
     
@@ -67,11 +68,11 @@ def get_weather_data(latitude: float, longitude: float) -> Dict[str, float]:
         
         humidity = float(data['main']['humidity'])
         
-        # Extract wind speed (m/s)
-        if 'wind' not in data or 'speed' not in data['wind']:
-            raise KeyError("Wind speed data not found in API response")
-        
-        wind_speed = float(data['wind']['speed'])
+        # Extract wind speed (convert m/s to km/h)
+        wind_speed = 0.0
+        if 'wind' in data and 'speed' in data['wind']:
+            speed_mps = float(data['wind']['speed'])
+            wind_speed = speed_mps * 3.6
         
         # Extract rainfall (mm) - default to 0 if missing
         rainfall = 0.0
@@ -80,7 +81,7 @@ def get_weather_data(latitude: float, longitude: float) -> Dict[str, float]:
             if '1h' in data['rain']:
                 rainfall = float(data['rain']['1h'])
             elif '3h' in data['rain']:
-                # Use 3h value, but we'll use it as-is (could divide by 3 for hourly, but keeping as-is)
+                # Use 3h value
                 rainfall = float(data['rain']['3h'])
         
         # Return dictionary with extracted data
@@ -90,6 +91,7 @@ def get_weather_data(latitude: float, longitude: float) -> Dict[str, float]:
             'wind_speed': wind_speed,
             'rainfall': rainfall
         }
+
     
     except requests.exceptions.Timeout:
         raise requests.RequestException(

@@ -7,7 +7,8 @@ import pandas as pd
 from typing import Dict
 
 
-def map_weather_to_features(weather_data: Dict[str, float]) -> pd.DataFrame:
+def build_feature_vector(weather_data: Dict[str, float]) -> pd.DataFrame:
+
     """
     Map weather data dictionary to a single-row DataFrame with features
     in the exact order used during model training.
@@ -35,8 +36,8 @@ def map_weather_to_features(weather_data: Dict[str, float]) -> pd.DataFrame:
     # Map from weather_api keys to feature names
     temperature = float(weather_data.get('temperature', 0.0))
     humidity = float(weather_data.get('humidity', 0.0))
-    wind = float(weather_data.get('wind_speed', 0.0))  # Map from 'wind_speed' to 'wind'
-    rain = float(weather_data.get('rainfall', 0.0))  # Map from 'rainfall' to 'rain'
+    wind = float(weather_data.get('wind', 0.0))
+    rain = float(weather_data.get('rain', 0.0))
     
     # Create DataFrame with EXACT feature order used during training
     # Order: temperature, humidity, wind, rain, FFMC, DMC, DC, ISI
